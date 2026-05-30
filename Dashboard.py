@@ -37,11 +37,11 @@ st.markdown("""
 @st.cache_data
 def load_data():
 
-    co2 = pd.read_csv("DATASETS/co2.csv", skiprows=4)
-    gdp = pd.read_csv("DATASETS/gdp.csv", skiprows=4)
-    urban = pd.read_csv("DATASETS/urban.csv", skiprows=4)
-    pop = pd.read_csv("DATASETS/population.csv", skiprows=4)
-    elec = pd.read_csv("DATASETS/electricity.csv", skiprows=4)
+    co2 = pd.read_csv("co2.csv", skiprows=4)
+    gdp = pd.read_csv("gdp.csv", skiprows=4)
+    urban = pd.read_csv("urban.csv", skiprows=4)
+    pop = pd.read_csv("population.csv", skiprows=4)
+    elec = pd.read_csv("electricity.csv", skiprows=4)
 
     def reshape(df, name):
         id_vars = ["Country Name", "Country Code"]
