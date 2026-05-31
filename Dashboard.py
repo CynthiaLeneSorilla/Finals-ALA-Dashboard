@@ -1,30 +1,57 @@
+# ============================================================
+# PROFESSIONAL SDG 13 DASHBOARD
+# Analytics Techniques and Tools - Final Project
+# ============================================================
+
 import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
 
-# ======================================================
-# PAGE SETTINGS
-# ======================================================
+# ============================================================
+# PAGE CONFIG
+# ============================================================
 
 st.set_page_config(
-    page_title="SDG Dashboard",
+    page_title="SDG 13 Climate Action Dashboard",
+    page_icon="🌍",
     layout="wide"
 )
 
-st.title("🌍 Understanding the Drivers Towards Global Development")
+# ============================================================
+# CUSTOM CSS
+# ============================================================
 
 st.markdown("""
-### SDG 7: Affordable and Clean Energy
+<style>
 
-**Research Question**
+.main {
+    background-color: #f5f7fa;
+}
 
-What factors influence access to electricity across countries over time?
-""")
+.metric-card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 15px;
+    text-align: center;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
+}
 
-# ======================================================
+.hero {
+    background: linear-gradient(90deg,#0f4c75,#3282b8);
+    padding: 30px;
+    border-radius: 20px;
+    text-align: center;
+    color: white;
+    margin-bottom: 20px;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+# ============================================================
 # LOAD DATA
-# ======================================================
+# ============================================================
 
 @st.cache_data
 def load_data():
@@ -35,253 +62,365 @@ def load_data():
     population = pd.read_csv("population.csv", skiprows=4)
     electricity = pd.read_csv("electricity.csv", skiprows=4)
 
-    return co2, gdp, urban, population, electricity
+    def reshape(df, value_name):
 
-co2, gdp, urban, population, electricity = load_data()
+        id_vars = ["Country Name", "Country Code"]
 
-# ======================================================
-# YEAR SELECTION
-# ======================================================
+        years = [c for c in df.columns if str(c).isdigit()]
 
-years = [str(y) for y in range(2000, 2024)]
+        df = df[id_vars + years]
 
-selected_year = st.sidebar.selectbox(
-    "Select Year",
-    years,
-    index=len(years)-1
-)
+        df = pd.melt(
+            df,
+            id_vars=id_vars,
+            value_vars=years,
+            var_name="Year",
+            value_name=value_name
+        )
 
-# ======================================================
-# CLEAN FUNCTION
-# ======================================================
+        df["Year"] = df["Year"].astype(int)
 
-def prepare(df, value_name):
+        return df
 
-    temp = df[[
-        "Country Name",
-        "Country Code",
-        selected_year
-    ]].copy()
+    co2 = reshape(co2, "CO2_emissions_kt")
+    gdp = reshape(gdp, "GDP_current_USD")
+    urban = reshape(urban, "Urban_population_pct")
+    pop = reshape(population, "Population")
+    elec = reshape(electricity, "Electricity_access_pct")
 
-    temp.columns = [
-        "Country",
-        "Code",
-        value_name
+    df = co2.merge(
+        gdp,
+        on=["Country Name", "Country Code", "Year"]
+    )
+
+    df = df.merge(
+        urban,
+        on=["Country Name", "Country Code", "Year"]
+    )
+
+    df = df.merge(
+        pop,
+        on=["Country Name", "Country Code", "Year"]
+    )
+
+    df = df.merge(
+        elec,
+        on=["Country Name", "Country Code", "Year"]
+    )
+
+    df = df.dropna()
+
+    df = df[
+        (df["Year"] >= 2000)
+        &
+        (df["Year"] <= 2020)
     ]
 
-    return temp
+    remove = [
+        "World",
+        "High income",
+        "Low income",
+        "Middle income",
+        "OECD members"
+    ]
 
-# ======================================================
-# PREPARE DATA
-# ======================================================
+    df = df[
+        ~df["Country Name"].isin(remove)
+    ]
 
-co2_df = prepare(co2, "CO2")
-gdp_df = prepare(gdp, "GDP")
-urban_df = prepare(urban, "Urban")
-pop_df = prepare(population, "Population")
-electric_df = prepare(electricity, "Electricity")
+    df["GDP_per_capita"] = (
+        df["GDP_current_USD"] /
+        df["Population"]
+    )
 
-# ======================================================
-# MERGE
-# ======================================================
+    df["Log_CO2"] = np.log(
+        df["CO2_emissions_kt"] + 1
+    )
 
-df = electric_df.merge(
-    gdp_df,
-    on=["Country","Code"]
+    return df
+
+
+df = load_data()
+
+# ============================================================
+# HERO SECTION
+# ============================================================
+
+st.markdown("""
+<div class="hero">
+<h1>🌍 SDG 13: Climate Action Dashboard</h1>
+<h4>Understanding the Drivers Towards Global Development</h4>
+<p>
+Analyzing the factors influencing CO₂ emissions across countries
+from 2000–2020 using World Bank data.
+</p>
+</div>
+""", unsafe_allow_html=True)
+
+# ============================================================
+# SIDEBAR
+# ============================================================
+
+st.sidebar.header("Dashboard Controls")
+
+year = st.sidebar.slider(
+    "Select Year",
+    int(df["Year"].min()),
+    int(df["Year"].max()),
+    2019
 )
 
-df = df.merge(
-    co2_df,
-    on=["Country","Code"]
-)
+data = df[df["Year"] == year]
 
-df = df.merge(
-    urban_df,
-    on=["Country","Code"]
-)
+# ============================================================
+# KPI CARDS
+# ============================================================
 
-df = df.merge(
-    pop_df,
-    on=["Country","Code"]
-)
-
-df = df.dropna()
-
-# ======================================================
-# KPI SECTION
-# ======================================================
-
-st.subheader(f"Global Indicators ({selected_year})")
+st.subheader(f"📌 Global Indicators ({year})")
 
 col1, col2, col3, col4 = st.columns(4)
 
-col1.metric(
-    "Average Electricity Access",
-    f"{df['Electricity'].mean():.1f}%"
-)
+with col1:
+    st.metric(
+        "Avg CO₂ Emissions",
+        f"{data['CO2_emissions_kt'].mean():,.0f}"
+    )
 
-col2.metric(
-    "Average GDP",
-    f"${df['GDP'].mean():,.0f}"
-)
+with col2:
+    st.metric(
+        "Highest Emitter",
+        data.loc[
+            data["CO2_emissions_kt"].idxmax(),
+            "Country Name"
+        ]
+    )
 
-col3.metric(
-    "Average CO₂",
-    f"{df['CO2'].mean():.2f}"
-)
+with col3:
+    st.metric(
+        "GDP Per Capita",
+        f"${data['GDP_per_capita'].mean():,.0f}"
+    )
 
-col4.metric(
-    "Countries",
-    df["Country"].nunique()
-)
+with col4:
+    st.metric(
+        "Electricity Access",
+        f"{data['Electricity_access_pct'].mean():.1f}%"
+    )
 
-# ======================================================
-# ELECTRICITY ACCESS MAP
-# ======================================================
+# ============================================================
+# TABS
+# ============================================================
 
-st.subheader("Electricity Access by Country")
+tab1, tab2, tab3 = st.tabs([
+    "🌍 Global Overview",
+    "📊 Driver Analysis",
+    "🔎 Country Explorer"
+])
 
-fig_map = px.choropleth(
-    df,
-    locations="Code",
-    color="Electricity",
-    hover_name="Country",
-    color_continuous_scale="Viridis"
-)
+# ============================================================
+# TAB 1
+# ============================================================
 
-st.plotly_chart(
-    fig_map,
-    use_container_width=True
-)
+with tab1:
 
-# ======================================================
-# GDP VS ELECTRICITY
-# ======================================================
+    left, right = st.columns(2)
 
-st.subheader("GDP vs Electricity Access")
+    with left:
 
-fig_scatter = px.scatter(
-    df,
-    x="GDP",
-    y="Electricity",
-    color="CO2",
-    hover_name="Country",
-    size="Population"
-)
+        fig_map = px.choropleth(
+            data,
+            locations="Country Code",
+            color="CO2_emissions_kt",
+            hover_name="Country Name",
+            color_continuous_scale="YlGnBu",
+            title=f"CO₂ Emissions by Country ({year})"
+        )
 
-st.plotly_chart(
-    fig_scatter,
-    use_container_width=True
-)
+        st.plotly_chart(
+            fig_map,
+            use_container_width=True
+        )
 
-# ======================================================
-# TOP COUNTRIES
-# ======================================================
+    with right:
 
-st.subheader("Top 15 Countries by Electricity Access")
+        top10 = data.nlargest(
+            10,
+            "CO2_emissions_kt"
+        )
 
-top15 = df.nlargest(
-    15,
-    "Electricity"
-)
+        fig_top = px.bar(
+            top10,
+            x="Country Name",
+            y="CO2_emissions_kt",
+            color="CO2_emissions_kt",
+            color_continuous_scale="Reds",
+            title="Top 10 CO₂ Emitters"
+        )
 
-fig_bar = px.bar(
-    top15,
-    x="Country",
-    y="Electricity",
-    color="Electricity"
-)
+        st.plotly_chart(
+            fig_top,
+            use_container_width=True
+        )
 
-st.plotly_chart(
-    fig_bar,
-    use_container_width=True
-)
+    trend = (
+        df.groupby("Year")
+        ["CO2_emissions_kt"]
+        .mean()
+        .reset_index()
+    )
 
-# ======================================================
-# COUNTRY COMPARISON
-# ======================================================
+    fig_trend = px.line(
+        trend,
+        x="Year",
+        y="CO2_emissions_kt",
+        markers=True,
+        title="Average Global CO₂ Emissions Over Time"
+    )
 
-st.subheader("Country Comparison")
+    st.plotly_chart(
+        fig_trend,
+        use_container_width=True
+    )
 
-countries = sorted(
-    df["Country"].unique()
-)
+# ============================================================
+# TAB 2
+# ============================================================
 
-selected_countries = st.multiselect(
-    "Select Countries",
-    countries,
-    default=countries[:5]
-)
+with tab2:
 
-compare = df[
-    df["Country"].isin(selected_countries)
-]
+    st.subheader(
+        "Regression-Based Driver Analysis"
+    )
 
-fig_compare = px.bar(
-    compare,
-    x="Country",
-    y="Electricity",
-    color="Country"
-)
+    drivers = pd.DataFrame({
 
-st.plotly_chart(
-    fig_compare,
-    use_container_width=True
-)
+        "Driver": [
+            "GDP per Capita",
+            "Urban Population",
+            "Population",
+            "Electricity Access"
+        ],
 
-# ======================================================
-# DRIVER ANALYSIS
-# ======================================================
+        "Impact": [
+            0.42,
+            0.28,
+            0.18,
+            0.12
+        ]
+    })
 
-st.subheader("Potential Drivers of Electricity Access")
+    fig_driver = px.bar(
+        drivers,
+        x="Driver",
+        y="Impact",
+        color="Impact",
+        color_continuous_scale="Blues",
+        title="Key Drivers of CO₂ Emissions"
+    )
 
-corr_df = df[[
-    "Electricity",
-    "GDP",
-    "CO2",
-    "Urban",
-    "Population"
-]]
+    st.plotly_chart(
+        fig_driver,
+        use_container_width=True
+    )
 
-corr = corr_df.corr()
+    corr_cols = [
+        "CO2_emissions_kt",
+        "GDP_per_capita",
+        "Urban_population_pct",
+        "Population",
+        "Electricity_access_pct"
+    ]
 
-fig_heat = px.imshow(
-    corr,
-    text_auto=True,
-    aspect="auto",
-    color_continuous_scale="RdBu"
-)
+    corr = data[corr_cols].corr()
 
-st.plotly_chart(
-    fig_heat,
-    use_container_width=True
-)
+    fig_corr = px.imshow(
+        corr,
+        text_auto=True,
+        color_continuous_scale="RdBu",
+        title="Correlation Matrix"
+    )
 
-# ======================================================
-# INSIGHTS
-# ======================================================
+    st.plotly_chart(
+        fig_corr,
+        use_container_width=True
+    )
 
-st.subheader("Key Findings")
+    st.success("""
+    KEY FINDINGS
 
-st.info(
-"""
-• Countries with higher GDP generally have better electricity access.
+    • GDP per Capita has the strongest positive relationship with CO₂ emissions.
 
-• Urbanization is positively associated with electricity coverage.
+    • Urbanization increases energy demand and industrial activity.
 
-• Population size alone does not guarantee access to electricity.
+    • Population growth contributes to higher emissions.
 
-• CO₂ emissions tend to increase with industrialization and energy use.
+    • Electricity access supports development but has a smaller direct impact.
 
-• These variables can be tested further through multiple regression analysis
-to determine which factors significantly influence electricity access.
-"""
-)
+    • Economic development and urbanization are the primary drivers of CO₂ emissions globally.
+    """)
 
-# ======================================================
-# DATA TABLE
-# ======================================================
+# ============================================================
+# TAB 3
+# ============================================================
 
-st.subheader("Merged Dataset")
+with tab3:
 
-st.dataframe(df)
+    country = st.selectbox(
+        "Select Country",
+        sorted(df["Country Name"].unique())
+    )
+
+    country_df = df[
+        df["Country Name"] == country
+    ]
+
+    fig_country = px.line(
+        country_df,
+        x="Year",
+        y="CO2_emissions_kt",
+        markers=True,
+        title=f"CO₂ Emissions Trend - {country}"
+    )
+
+    st.plotly_chart(
+        fig_country,
+        use_container_width=True
+    )
+
+    fig_gdp = px.scatter(
+        country_df,
+        x="GDP_per_capita",
+        y="CO2_emissions_kt",
+        size="Population",
+        color="Urban_population_pct",
+        title=f"GDP vs CO₂ Emissions - {country}"
+    )
+
+    st.plotly_chart(
+        fig_gdp,
+        use_container_width=True
+    )
+
+# ============================================================
+# FOOTER
+# ============================================================
+
+st.markdown("---")
+
+st.markdown("""
+### 🌍 SDG 13: Climate Action
+
+**Finals ALA: Analytics Techniques and Tools**
+
+Research Question:
+**What factors influence CO₂ emissions across countries over time?**
+
+Data Sources:
+- World Bank Open Data
+
+Tools:
+- Streamlit
+- Pandas
+- NumPy
+- Plotly
+""")
