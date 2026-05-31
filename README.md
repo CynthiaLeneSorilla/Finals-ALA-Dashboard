@@ -73,8 +73,4 @@ The interactive dashboard includes:
 
 ---
 
-## 🚀 How to Run the Project
-
-```bash
-pip install streamlit pandas numpy plotly
-streamlit run Dashboard.py
+## Live Interative Dashboard: https://finals-ala-dashboard-8eybj8ogwnr3cqjd7mhxby.streamlit.app/
