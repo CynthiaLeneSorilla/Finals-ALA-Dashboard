@@ -1,5 +1,5 @@
 # ============================================================
-# SDG 13 CLIMATE ACTION DASHBOARD
+# SDG 13 CLIMATE ACTION DASHBOARD (UI UPGRADED)
 # ============================================================
 
 import streamlit as st
@@ -20,84 +20,114 @@ st.set_page_config(
 
 
 # ============================================================
-# SDG 13 THEME (BACKGROUND + COLORS)
+# GLOBAL UI DESIGN (IMPROVED SPACING + MODERN COLORS)
 # ============================================================
 
 st.markdown("""
 <style>
 
-/* GLOBAL BACKGROUND */
+/* ===== BACKGROUND ===== */
 .stApp {
     background: linear-gradient(
         180deg,
-        #f1f8f4 0%,
-        #e8f5e9 40%,
-        #d8f3dc 100%
+        #f8fbfa 0%,
+        #eaf5f1 50%,
+        #dff0e8 100%
     );
+    font-family: 'Arial';
 }
 
-/* HERO */
+/* ===== HERO SECTION ===== */
 .hero {
     background: linear-gradient(
         135deg,
-        #0b3d2e,
-        #1b4332,
-        #2d6a4f
+        #0f2f2e,
+        #134e4a,
+        #166a5a
     );
-    padding: 35px;
-    border-radius: 25px;
+    padding: 55px 35px;
+    border-radius: 28px;
     text-align: center;
     color: white;
-    margin-bottom: 25px;
-    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    margin-bottom: 45px;
+    box-shadow: 0 12px 35px rgba(0,0,0,0.18);
 }
 
-/* SIDEBAR */
+/* HERO TEXT SPACING */
+.hero h1 {
+    margin-bottom: 12px;
+}
+
+.hero h4 {
+    margin-bottom: 10px;
+    font-weight: 400;
+}
+
+/* ===== SIDEBAR ===== */
 section[data-testid="stSidebar"] {
     background: linear-gradient(
         to bottom,
-        #d8f3dc,
-        #b7e4c7
+        #e6f4ea,
+        #d7f0df
     );
 }
 
-/* KPI HOVER EFFECT */
+/* ===== KPI SPACING ===== */
+div[data-testid="column"] {
+    padding: 12px;
+}
+
+/* ===== KPI CARD DESIGN ===== */
 div[style*="border-left"] {
-    transition: 0.3s ease;
+    background: white;
+    padding: 24px;
+    border-radius: 18px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.08);
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
 }
 
 div[style*="border-left"]:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 18px rgba(0,0,0,0.15);
+    transform: translateY(-6px);
+    box-shadow: 0 14px 28px rgba(0,0,0,0.12);
 }
 
-/* CHART CONTAINER */
+/* ===== HEADINGS ===== */
+h1, h2, h3 {
+    color: #0f3d3e;
+    margin-bottom: 12px;
+}
+
+/* ===== PARAGRAPH SPACING ===== */
+p {
+    line-height: 1.6;
+    color: #2f3e46;
+}
+
+/* ===== CHART CARDS ===== */
 [data-testid="stPlotlyChart"] {
     background: white;
-    padding: 10px;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    padding: 18px;
+    border-radius: 18px;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.06);
+    margin-bottom: 28px;
 }
 
-/* HEADINGS */
-h1, h2, h3 {
-    color: #1b4332;
-}
-
-/* SUCCESS BOX */
-.stSuccess {
-    border-left: 6px solid #2d6a4f;
+/* ===== SELECTBOX ===== */
+.stSelectbox > div > div {
     border-radius: 12px;
 }
 
-/* SLIDER */
-.stSlider > div > div > div > div {
-    background-color: #2d6a4f;
+/* ===== SUCCESS BOX ===== */
+.stSuccess {
+    border-left: 6px solid #1b4332;
+    border-radius: 12px;
+    padding: 14px;
 }
 
-/* SELECT BOX */
-.stSelectbox > div > div {
-    border-radius: 10px;
+/* ===== SLIDER ===== */
+.stSlider > div > div > div > div {
+    background-color: #166a5a;
 }
 
 </style>
@@ -179,6 +209,10 @@ st.markdown("""
 <div class="hero">
 <h1>🌍 SDG 13: Climate Action Dashboard</h1>
 <h4>Understanding Global CO₂ Emission Drivers (2000–2020)</h4>
+<p>
+A clean, modern data visualization dashboard showing how economic and social
+factors influence global emissions.
+</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -200,23 +234,23 @@ data = df[df["Year"] == year]
 
 
 # ============================================================
-# KPI BOX FUNCTION
+# KPI FUNCTION
 # ============================================================
 
 def kpi_box(title, value, color="#2d6a4f"):
     st.markdown(f"""
     <div style="
         background: white;
-        padding: 20px;
-        border-radius: 15px;
-        box-shadow: 0px 4px 12px rgba(0,0,0,0.10);
+        padding: 24px;
+        border-radius: 18px;
+        box-shadow: 0 8px 22px rgba(0,0,0,0.08);
         border-left: 6px solid {color};
         text-align: center;
     ">
         <div style="font-size:14px; color:gray; font-weight:600;">
             {title}
         </div>
-        <div style="font-size:22px; font-weight:bold; color:#1b4332; margin-top:8px;">
+        <div style="font-size:22px; font-weight:bold; color:#0f3d3e; margin-top:10px;">
             {value}
         </div>
     </div>
@@ -235,28 +269,28 @@ with col1:
     kpi_box(
         "Avg CO₂ Emissions",
         f"{data['CO2_emissions_kt'].mean():,.0f}",
-        "#2d6a4f"
+        "#166a5a"
     )
 
 with col2:
     kpi_box(
         "Highest Emitter",
         data.loc[data["CO2_emissions_kt"].idxmax(), "Country Name"],
-        "#40916c"
+        "#1b4332"
     )
 
 with col3:
     kpi_box(
         "GDP Per Capita",
         f"${data['GDP_per_capita'].mean():,.0f}",
-        "#52b788"
+        "#2d6a4f"
     )
 
 with col4:
     kpi_box(
         "Electricity Access",
         f"{data['Electricity_access_pct'].mean():.1f}%",
-        "#74c69d"
+        "#40916c"
     )
 
 
@@ -397,7 +431,7 @@ with tab3:
         title=f"CO₂ Emissions Trend - {country}"
     )
 
-    fig_country.update_traces(line=dict(color="#0b3d2e", width=4))
+    fig_country.update_traces(line=dict(color="#0f3d3e", width=4))
 
     st.plotly_chart(fig_country, use_container_width=True)
 
