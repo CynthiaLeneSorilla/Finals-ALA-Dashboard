@@ -3,211 +3,149 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
-# ==================================================
-# PAGE CONFIG
-# ==================================================
+# ======================================================
+# PAGE SETTINGS
+# ======================================================
 
 st.set_page_config(
-    page_title="SDG 13 Climate Action Dashboard",
-    page_icon="🌍",
+    page_title="SDG Dashboard",
     layout="wide"
 )
-
-# ==================================================
-# LOAD DATA
-# ==================================================
-
-
-co2 = pd.read_csv("co2.csv", skiprows=4)
-gdp = pd.read_csv("gdp.csv", skiprows=4)
-urban = pd.read_csv("urban.csv", skiprows=4)
-population = pd.read_csv("population.csv", skiprows=4)
-electricity = pd.read_csv("electricity.csv", skiprows=4)
-
-# Required Columns:
-# Country
-# Year
-# LifeExpectancy
-# GDP
-# HealthExpenditure
-# EducationIndex
-# CleanWaterAccess
-# CO2
-# Continent
-# ISO_Code
-
-# ==================================================
-# HEADER
-# ==================================================
 
 st.title("🌍 Understanding the Drivers Towards Global Development")
 
 st.markdown("""
-### SDG 3: Good Health and Well-Being
+### SDG 7: Affordable and Clean Energy
 
-**Research Question:**
+**Research Question**
 
-*What factors influence Life Expectancy across countries over time?*
+What factors influence access to electricity across countries over time?
 """)
 
-# ==================================================
-# SIDEBAR
-# ==================================================
+# ======================================================
+# LOAD DATA
+# ======================================================
 
-st.sidebar.header("Filters")
+@st.cache_data
+def load_data():
 
-selected_year = st.sidebar.slider(
+    co2 = pd.read_csv("co2.csv", skiprows=4)
+    gdp = pd.read_csv("gdp.csv", skiprows=4)
+    urban = pd.read_csv("urban.csv", skiprows=4)
+    population = pd.read_csv("population.csv", skiprows=4)
+    electricity = pd.read_csv("electricity.csv", skiprows=4)
+
+    return co2, gdp, urban, population, electricity
+
+co2, gdp, urban, population, electricity = load_data()
+
+# ======================================================
+# YEAR SELECTION
+# ======================================================
+
+years = [str(y) for y in range(2000, 2024)]
+
+selected_year = st.sidebar.selectbox(
     "Select Year",
-    int(df["Year"].min()),
-    int(df["Year"].max()),
-    int(df["Year"].max())
+    years,
+    index=len(years)-1
 )
 
-filtered_df = df[df["Year"] == selected_year]
+# ======================================================
+# CLEAN FUNCTION
+# ======================================================
 
-# ==================================================
+def prepare(df, value_name):
+
+    temp = df[[
+        "Country Name",
+        "Country Code",
+        selected_year
+    ]].copy()
+
+    temp.columns = [
+        "Country",
+        "Code",
+        value_name
+    ]
+
+    return temp
+
+# ======================================================
+# PREPARE DATA
+# ======================================================
+
+co2_df = prepare(co2, "CO2")
+gdp_df = prepare(gdp, "GDP")
+urban_df = prepare(urban, "Urban")
+pop_df = prepare(population, "Population")
+electric_df = prepare(electricity, "Electricity")
+
+# ======================================================
+# MERGE
+# ======================================================
+
+df = electric_df.merge(
+    gdp_df,
+    on=["Country","Code"]
+)
+
+df = df.merge(
+    co2_df,
+    on=["Country","Code"]
+)
+
+df = df.merge(
+    urban_df,
+    on=["Country","Code"]
+)
+
+df = df.merge(
+    pop_df,
+    on=["Country","Code"]
+)
+
+df = df.dropna()
+
+# ======================================================
 # KPI SECTION
-# ==================================================
+# ======================================================
 
-avg_life = filtered_df["LifeExpectancy"].mean()
-
-avg_gdp = filtered_df["GDP"].mean()
-
-avg_health = filtered_df["HealthExpenditure"].mean()
-
-countries = filtered_df["Country"].nunique()
+st.subheader(f"Global Indicators ({selected_year})")
 
 col1, col2, col3, col4 = st.columns(4)
 
 col1.metric(
-    "Life Expectancy",
-    f"{avg_life:.1f}"
+    "Average Electricity Access",
+    f"{df['Electricity'].mean():.1f}%"
 )
 
 col2.metric(
-    "GDP per Capita",
-    f"${avg_gdp:,.0f}"
+    "Average GDP",
+    f"${df['GDP'].mean():,.0f}"
 )
 
 col3.metric(
-    "Health Expenditure",
-    f"{avg_health:.1f}%"
+    "Average CO₂",
+    f"{df['CO2'].mean():.2f}"
 )
 
 col4.metric(
     "Countries",
-    countries
+    df["Country"].nunique()
 )
 
-st.divider()
+# ======================================================
+# ELECTRICITY ACCESS MAP
+# ======================================================
 
-# ==================================================
-# LIFE EXPECTANCY TREND
-# ==================================================
-
-trend = (
-    df.groupby("Year")["LifeExpectancy"]
-    .mean()
-    .reset_index()
-)
-
-fig_trend = px.line(
-    trend,
-    x="Year",
-    y="LifeExpectancy",
-    markers=True,
-    title="Global Life Expectancy Trend"
-)
-
-st.plotly_chart(
-    fig_trend,
-    use_container_width=True
-)
-
-# ==================================================
-# GDP VS LIFE EXPECTANCY
-# ==================================================
-
-fig_scatter = px.scatter(
-    filtered_df,
-    x="GDP",
-    y="LifeExpectancy",
-    color="Continent",
-    size="HealthExpenditure",
-    hover_name="Country",
-    title="GDP vs Life Expectancy"
-)
-
-st.plotly_chart(
-    fig_scatter,
-    use_container_width=True
-)
-
-# ==================================================
-# TOP COUNTRIES
-# ==================================================
-
-top10 = filtered_df.nlargest(
-    10,
-    "LifeExpectancy"
-)
-
-fig_bar = px.bar(
-    top10,
-    x="Country",
-    y="LifeExpectancy",
-    color="LifeExpectancy",
-    title="Top 10 Countries by Life Expectancy"
-)
-
-st.plotly_chart(
-    fig_bar,
-    use_container_width=True
-)
-
-# ==================================================
-# COUNTRY COMPARISON
-# ==================================================
-
-st.subheader("Country Comparison")
-
-country_list = sorted(
-    filtered_df["Country"].unique()
-)
-
-selected_countries = st.multiselect(
-    "Select Countries",
-    country_list,
-    default=country_list[:5]
-)
-
-comparison = filtered_df[
-    filtered_df["Country"].isin(selected_countries)
-]
-
-fig_compare = px.bar(
-    comparison,
-    x="Country",
-    y="LifeExpectancy",
-    color="Country",
-    title="Life Expectancy Comparison"
-)
-
-st.plotly_chart(
-    fig_compare,
-    use_container_width=True
-)
-
-# ==================================================
-# WORLD MAP
-# ==================================================
+st.subheader("Electricity Access by Country")
 
 fig_map = px.choropleth(
-    filtered_df,
-    locations="ISO_Code",
-    color="LifeExpectancy",
+    df,
+    locations="Code",
+    color="Electricity",
     hover_name="Country",
-    title="Life Expectancy Around the World",
     color_continuous_scale="Viridis"
 )
 
@@ -216,59 +154,134 @@ st.plotly_chart(
     use_container_width=True
 )
 
-# ==================================================
-# REGRESSION DRIVERS
-# ==================================================
+# ======================================================
+# GDP VS ELECTRICITY
+# ======================================================
 
-st.subheader("Key Drivers Identified from Regression")
+st.subheader("GDP vs Electricity Access")
 
-drivers = pd.DataFrame({
-
-    "Variable": [
-        "GDP per Capita",
-        "Health Expenditure",
-        "Education Index",
-        "Access to Clean Water",
-        "CO₂ Emissions"
-    ],
-
-    "Coefficient": [
-        0.52,
-        0.41,
-        0.37,
-        0.28,
-        -0.24
-    ]
-})
-
-fig_driver = px.bar(
-    drivers,
-    x="Coefficient",
-    y="Variable",
-    orientation="h",
-    color="Coefficient",
-    title="Regression Coefficients"
+fig_scatter = px.scatter(
+    df,
+    x="GDP",
+    y="Electricity",
+    color="CO2",
+    hover_name="Country",
+    size="Population"
 )
 
 st.plotly_chart(
-    fig_driver,
+    fig_scatter,
     use_container_width=True
 )
 
-# ==================================================
+# ======================================================
+# TOP COUNTRIES
+# ======================================================
+
+st.subheader("Top 15 Countries by Electricity Access")
+
+top15 = df.nlargest(
+    15,
+    "Electricity"
+)
+
+fig_bar = px.bar(
+    top15,
+    x="Country",
+    y="Electricity",
+    color="Electricity"
+)
+
+st.plotly_chart(
+    fig_bar,
+    use_container_width=True
+)
+
+# ======================================================
+# COUNTRY COMPARISON
+# ======================================================
+
+st.subheader("Country Comparison")
+
+countries = sorted(
+    df["Country"].unique()
+)
+
+selected_countries = st.multiselect(
+    "Select Countries",
+    countries,
+    default=countries[:5]
+)
+
+compare = df[
+    df["Country"].isin(selected_countries)
+]
+
+fig_compare = px.bar(
+    compare,
+    x="Country",
+    y="Electricity",
+    color="Country"
+)
+
+st.plotly_chart(
+    fig_compare,
+    use_container_width=True
+)
+
+# ======================================================
+# DRIVER ANALYSIS
+# ======================================================
+
+st.subheader("Potential Drivers of Electricity Access")
+
+corr_df = df[[
+    "Electricity",
+    "GDP",
+    "CO2",
+    "Urban",
+    "Population"
+]]
+
+corr = corr_df.corr()
+
+fig_heat = px.imshow(
+    corr,
+    text_auto=True,
+    aspect="auto",
+    color_continuous_scale="RdBu"
+)
+
+st.plotly_chart(
+    fig_heat,
+    use_container_width=True
+)
+
+# ======================================================
 # INSIGHTS
-# ==================================================
+# ======================================================
 
 st.subheader("Key Findings")
 
-st.success("""
-1. GDP per Capita is the strongest positive predictor of Life Expectancy.
+st.info(
+"""
+• Countries with higher GDP generally have better electricity access.
 
-2. Health Expenditure significantly improves health outcomes.
+• Urbanization is positively associated with electricity coverage.
 
-3. Education contributes to longer life expectancy.
+• Population size alone does not guarantee access to electricity.
 
-4. Access to Clean Water positively impacts public health.
+• CO₂ emissions tend to increase with industrialization and energy use.
 
-5. CO₂ Emissions negatively affect life expectancy.
-""")
+• These variables can be tested further through multiple regression analysis
+to determine which factors significantly influence electricity access.
+"""
+)
+
+# ======================================================
+# DATA TABLE
+# ======================================================
+
+st.subheader("Merged Dataset")
+
+st.dataframe(df)
