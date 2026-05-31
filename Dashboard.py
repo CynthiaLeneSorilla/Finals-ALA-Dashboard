@@ -1,6 +1,5 @@
 # ============================================================
-# PROFESSIONAL SDG 13 DASHBOARD
-# Analytics Techniques and Tools - Final Project
+# SDG 13 CLIMATE ACTION DASHBOARD
 # ============================================================
 
 import streamlit as st
@@ -21,23 +20,84 @@ st.set_page_config(
 
 
 # ============================================================
-# CUSTOM CSS
+# SDG 13 THEME (BACKGROUND + COLORS)
 # ============================================================
 
 st.markdown("""
 <style>
 
-.main {
-    background-color: #f5f7fa;
+/* GLOBAL BACKGROUND */
+.stApp {
+    background: linear-gradient(
+        180deg,
+        #f1f8f4 0%,
+        #e8f5e9 40%,
+        #d8f3dc 100%
+    );
 }
 
+/* HERO */
 .hero {
-    background: linear-gradient(90deg,#0f4c75,#3282b8);
-    padding: 30px;
-    border-radius: 20px;
+    background: linear-gradient(
+        135deg,
+        #0b3d2e,
+        #1b4332,
+        #2d6a4f
+    );
+    padding: 35px;
+    border-radius: 25px;
     text-align: center;
     color: white;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* SIDEBAR */
+section[data-testid="stSidebar"] {
+    background: linear-gradient(
+        to bottom,
+        #d8f3dc,
+        #b7e4c7
+    );
+}
+
+/* KPI HOVER EFFECT */
+div[style*="border-left"] {
+    transition: 0.3s ease;
+}
+
+div[style*="border-left"]:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 18px rgba(0,0,0,0.15);
+}
+
+/* CHART CONTAINER */
+[data-testid="stPlotlyChart"] {
+    background: white;
+    padding: 10px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+}
+
+/* HEADINGS */
+h1, h2, h3 {
+    color: #1b4332;
+}
+
+/* SUCCESS BOX */
+.stSuccess {
+    border-left: 6px solid #2d6a4f;
+    border-radius: 12px;
+}
+
+/* SLIDER */
+.stSlider > div > div > div > div {
+    background-color: #2d6a4f;
+}
+
+/* SELECT BOX */
+.stSelectbox > div > div {
+    border-radius: 10px;
 }
 
 </style>
@@ -103,7 +163,6 @@ def load_data():
     df = df[~df["Country Name"].isin(remove)]
 
     df["GDP_per_capita"] = df["GDP_current_USD"] / df["Population"]
-
     df["Log_CO2"] = np.log(df["CO2_emissions_kt"] + 1)
 
     return df
@@ -119,7 +178,7 @@ df = load_data()
 st.markdown("""
 <div class="hero">
 <h1>🌍 SDG 13: Climate Action Dashboard</h1>
-<h4>Understanding Global CO₂ Emission Drivers</h4>
+<h4>Understanding Global CO₂ Emission Drivers (2000–2020)</h4>
 </div>
 """, unsafe_allow_html=True)
 
@@ -165,7 +224,7 @@ def kpi_box(title, value, color="#2d6a4f"):
 
 
 # ============================================================
-# KPI CARDS
+# KPI SECTION
 # ============================================================
 
 st.subheader(f"📌 Global Indicators ({year})")
@@ -254,7 +313,7 @@ with tab1:
         title="Average Global CO₂ Emissions Over Time"
     )
 
-    fig_trend.update_traces(line=dict(color="#2d6a4f", width=4))
+    fig_trend.update_traces(line=dict(color="#1b4332", width=4))
 
     st.plotly_chart(fig_trend, use_container_width=True)
 
@@ -310,10 +369,10 @@ with tab2:
     st.success("""
     KEY FINDINGS
 
-    • GDP per Capita strongly increases CO₂ emissions  
-    • Urbanization drives energy demand  
-    • Population growth increases emissions  
-    • Electricity access has smaller direct impact  
+    • Economic growth increases emissions  
+    • Urbanization increases energy demand  
+    • Population increases total emissions  
+    • Electricity access supports development  
     """)
 
 
@@ -338,7 +397,7 @@ with tab3:
         title=f"CO₂ Emissions Trend - {country}"
     )
 
-    fig_country.update_traces(line=dict(color="#1b4332", width=4))
+    fig_country.update_traces(line=dict(color="#0b3d2e", width=4))
 
     st.plotly_chart(fig_country, use_container_width=True)
 
