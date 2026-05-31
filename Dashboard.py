@@ -8,7 +8,7 @@ import plotly.express as px
 # ==================================================
 
 st.set_page_config(
-    page_title="SDG Dashboard",
+    page_title="SDG 13 Climate Action Dashboard",
     page_icon="🌍",
     layout="wide"
 )
@@ -17,7 +17,13 @@ st.set_page_config(
 # LOAD DATA
 # ==================================================
 
-df = pd.read_csv("sdg_data.csv")
+
+
+    co2 = pd.read_csv("co2.csv", skiprows=4)
+    gdp = pd.read_csv("gdp.csv", skiprows=4)
+    urban = pd.read_csv("urban.csv", skiprows=4)
+    population = pd.read_csv("population.csv", skiprows=4)
+    electricity = pd.read_csv("electricity.csv", skiprows=4)
 
 # Required Columns:
 # Country
