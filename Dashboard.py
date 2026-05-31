@@ -31,14 +31,6 @@ st.markdown("""
     background-color: #f5f7fa;
 }
 
-.metric-card {
-    background-color: white;
-    padding: 20px;
-    border-radius: 15px;
-    text-align: center;
-    box-shadow: 0px 4px 12px rgba(0,0,0,0.08);
-}
-
 .hero {
     background: linear-gradient(90deg,#0f4c75,#3282b8);
     padding: 30px;
@@ -91,52 +83,28 @@ def load_data():
     pop = reshape(population, "Population")
     elec = reshape(electricity, "Electricity_access_pct")
 
-    df = co2.merge(
-        gdp,
-        on=["Country Name", "Country Code", "Year"]
-    )
-
-    df = df.merge(
-        urban,
-        on=["Country Name", "Country Code", "Year"]
-    )
-
-    df = df.merge(
-        pop,
-        on=["Country Name", "Country Code", "Year"]
-    )
-
-    df = df.merge(
-        elec,
-        on=["Country Name", "Country Code", "Year"]
-    )
+    df = co2.merge(gdp, on=["Country Name", "Country Code", "Year"])
+    df = df.merge(urban, on=["Country Name", "Country Code", "Year"])
+    df = df.merge(pop, on=["Country Name", "Country Code", "Year"])
+    df = df.merge(elec, on=["Country Name", "Country Code", "Year"])
 
     df = df.dropna()
 
-    df = df[
-        (df["Year"] >= 2000) &
-        (df["Year"] <= 2020)
-    ]
+    df = df[(df["Year"] >= 2000) & (df["Year"] <= 2020)]
 
     remove = [
         "World",
         "High income",
         "Low income",
         "Middle income",
-        "OECD members"
+        "OECD members",
     ]
 
-    df = df[
-        ~df["Country Name"].isin(remove)
-    ]
+    df = df[~df["Country Name"].isin(remove)]
 
-    df["GDP_per_capita"] = (
-        df["GDP_current_USD"] / df["Population"]
-    )
+    df["GDP_per_capita"] = df["GDP_current_USD"] / df["Population"]
 
-    df["Log_CO2"] = np.log(
-        df["CO2_emissions_kt"] + 1
-    )
+    df["Log_CO2"] = np.log(df["CO2_emissions_kt"] + 1)
 
     return df
 
@@ -151,11 +119,7 @@ df = load_data()
 st.markdown("""
 <div class="hero">
 <h1>🌍 SDG 13: Climate Action Dashboard</h1>
-<h4>Understanding the Drivers Towards Global Development</h4>
-<p>
-Analyzing the factors influencing CO₂ emissions across countries
-from 2000–2020 using World Bank data.
-</p>
+<h4>Understanding Global CO₂ Emission Drivers</h4>
 </div>
 """, unsafe_allow_html=True)
 
@@ -177,12 +141,8 @@ data = df[df["Year"] == year]
 
 
 # ============================================================
-# KPI CARDS (BOXED VERSION)
+# KPI BOX FUNCTION
 # ============================================================
-
-st.subheader(f"📌 Global Indicators ({year})")
-
-col1, col2, col3, col4 = st.columns(4)
 
 def kpi_box(title, value, color="#2d6a4f"):
     st.markdown(f"""
@@ -204,6 +164,14 @@ def kpi_box(title, value, color="#2d6a4f"):
     """, unsafe_allow_html=True)
 
 
+# ============================================================
+# KPI CARDS
+# ============================================================
+
+st.subheader(f"📌 Global Indicators ({year})")
+
+col1, col2, col3, col4 = st.columns(4)
+
 with col1:
     kpi_box(
         "Avg CO₂ Emissions",
@@ -214,10 +182,7 @@ with col1:
 with col2:
     kpi_box(
         "Highest Emitter",
-        data.loc[
-            data["CO2_emissions_kt"].idxmax(),
-            "Country Name"
-        ],
+        data.loc[data["CO2_emissions_kt"].idxmax(), "Country Name"],
         "#40916c"
     )
 
@@ -231,7 +196,7 @@ with col3:
 with col4:
     kpi_box(
         "Electricity Access",
-        f"{data['Electricity_access_pct"].mean():.1f}%",
+        f"{data['Electricity_access_pct'].mean():.1f}%",
         "#74c69d"
     )
 
@@ -256,20 +221,17 @@ with tab1:
     left, right = st.columns(2)
 
     with left:
-
         fig_map = px.choropleth(
             data,
             locations="Country Code",
             color="CO2_emissions_kt",
             hover_name="Country Name",
-            color_continuous_scale="YlGnBu",
+            color_continuous_scale="Viridis",
             title=f"CO₂ Emissions by Country ({year})"
         )
-
         st.plotly_chart(fig_map, use_container_width=True)
 
     with right:
-
         top10 = data.nlargest(10, "CO2_emissions_kt")
 
         fig_top = px.bar(
@@ -277,17 +239,12 @@ with tab1:
             x="Country Name",
             y="CO2_emissions_kt",
             color="CO2_emissions_kt",
-            color_continuous_scale="Reds",
+            color_continuous_scale="Viridis",
             title="Top 10 CO₂ Emitters"
         )
-
         st.plotly_chart(fig_top, use_container_width=True)
 
-    trend = (
-        df.groupby("Year")["CO2_emissions_kt"]
-        .mean()
-        .reset_index()
-    )
+    trend = df.groupby("Year")["CO2_emissions_kt"].mean().reset_index()
 
     fig_trend = px.line(
         trend,
@@ -296,6 +253,8 @@ with tab1:
         markers=True,
         title="Average Global CO₂ Emissions Over Time"
     )
+
+    fig_trend.update_traces(line=dict(color="#2d6a4f", width=4))
 
     st.plotly_chart(fig_trend, use_container_width=True)
 
@@ -323,7 +282,7 @@ with tab2:
         x="Driver",
         y="Impact",
         color="Impact",
-        color_continuous_scale="Blues",
+        color_continuous_scale="Aggrnyl",
         title="Key Drivers of CO₂ Emissions"
     )
 
@@ -342,7 +301,7 @@ with tab2:
     fig_corr = px.imshow(
         corr,
         text_auto=True,
-        color_continuous_scale="RdBu",
+        color_continuous_scale="RdYlGn",
         title="Correlation Matrix"
     )
 
@@ -351,10 +310,10 @@ with tab2:
     st.success("""
     KEY FINDINGS
 
-    • GDP per Capita has the strongest relationship with CO₂ emissions.
-    • Urbanization increases energy demand and industrial activity.
-    • Population growth contributes to higher emissions.
-    • Electricity access supports development but has smaller impact.
+    • GDP per Capita strongly increases CO₂ emissions  
+    • Urbanization drives energy demand  
+    • Population growth increases emissions  
+    • Electricity access has smaller direct impact  
     """)
 
 
@@ -379,6 +338,8 @@ with tab3:
         title=f"CO₂ Emissions Trend - {country}"
     )
 
+    fig_country.update_traces(line=dict(color="#1b4332", width=4))
+
     st.plotly_chart(fig_country, use_container_width=True)
 
     fig_gdp = px.scatter(
@@ -387,6 +348,7 @@ with tab3:
         y="CO2_emissions_kt",
         size="Population",
         color="Urban_population_pct",
+        color_continuous_scale="Viridis",
         title=f"GDP vs CO₂ Emissions - {country}"
     )
 
