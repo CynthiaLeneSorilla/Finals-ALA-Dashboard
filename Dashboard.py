@@ -1,5 +1,5 @@
 # ============================================================
-# SDG 13 DASHBOARD (FINAL FIXED + RED ACCENT + CLEAN UI)
+# SDG 13 CLIMATE ACTION DASHBOARD (LIGHT PRESENTATION STYLE)
 # ============================================================
 
 import streamlit as st
@@ -20,37 +20,37 @@ st.set_page_config(
 
 
 # ============================================================
-# THEME (SOFT DARK + RED ACCENT)
+# LIGHT MODERN PRESENTATION THEME
 # ============================================================
 
 st.markdown("""
 <style>
 
-/* ===== BACKGROUND (SOFT DARK GRAY) ===== */
+/* ===== BACKGROUND (LIGHT CLEAN GRADIENT) ===== */
 .stApp {
     background: linear-gradient(
         180deg,
-        #2c2f36 0%,
-        #31343b 50%,
-        #2a2d33 100%
+        #f7fbff 0%,
+        #eef6f3 50%,
+        #fdfdfd 100%
     );
     font-family: Arial;
 }
 
-/* ===== HERO ===== */
+/* ===== HERO (SOFT BLUE-GREEN SDG STYLE) ===== */
 .hero {
     background: linear-gradient(
         135deg,
-        #1f2a2e,
-        #2b3f44,
-        #3a1f1f
+        #1d3557,
+        #457b9d,
+        #2a9d8f
     );
     padding: 55px 35px;
     border-radius: 28px;
     text-align: center;
-    color: #ffffff;
+    color: white;
     margin-bottom: 45px;
-    box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
 }
 
 /* HERO TEXT */
@@ -59,65 +59,70 @@ st.markdown("""
 }
 
 .hero h4 {
-    color: #e0e0e0;
+    color: #eaf4f4;
     font-weight: 400;
 }
 
 /* ===== SIDEBAR ===== */
 section[data-testid="stSidebar"] {
-    background: #23262b;
+    background: linear-gradient(to bottom, #edf6f9, #d8f3dc);
 }
 
-/* ============================================================
-   KPI BOX (FIXED VISIBILITY + RED ACCENT)
-============================================================ */
-
+/* ===== KPI CARD ===== */
 .kpi-card {
-    background: #3a3d45;
+    background: white;
     padding: 22px;
     border-radius: 16px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
     text-align: center;
-    border-left: 6px solid #ff4d4d;
+    border-left: 6px solid #2a9d8f;
     transition: 0.25s ease;
 }
 
 .kpi-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.12);
 }
 
 /* KPI TEXT */
 .kpi-title {
     font-size: 13px;
-    color: #ffb3b3;   /* light red tint */
+    color: #6c757d;
     margin-bottom: 8px;
-    font-weight: 600;
 }
 
 .kpi-value {
     font-size: 22px;
     font-weight: bold;
-    color: #ffffff;   /* FIXED: readable white */
+    color: #1d3557;
 }
 
-/* ===== HEADINGS (RESTORED VISIBILITY) ===== */
-h1, h2, h3 {
-    color: #f5f5f5 !important;
-}
-
-/* ===== GLOBAL TEXT ===== */
-p {
-    color: #d0d0d0;
-}
-
-/* ===== CHART BOXES ===== */
+/* ===== CHART CARDS ===== */
 [data-testid="stPlotlyChart"] {
-    background: #3a3d45;
+    background: white;
     padding: 16px;
     border-radius: 16px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.06);
     margin-bottom: 25px;
+}
+
+/* ===== HEADINGS ===== */
+h1, h2, h3 {
+    color: #1d3557;
+}
+
+p {
+    color: #495057;
+}
+
+/* ===== SELECT BOX ===== */
+.stSelectbox > div > div {
+    border-radius: 10px;
+}
+
+/* ===== SLIDER ===== */
+.stSlider > div > div > div > div {
+    background-color: #2a9d8f;
 }
 
 </style>
@@ -181,13 +186,13 @@ df = load_data()
 
 
 # ============================================================
-# HERO (RESTORED)
+# HERO SECTION
 # ============================================================
 
 st.markdown("""
 <div class="hero">
-<h1>🌍 SDG 13 Climate Action Dashboard</h1>
-<h4>Global CO₂ Emissions Analysis (2000–2020)</h4>
+<h1>🌍 SDG 13: Climate Action Dashboard</h1>
+<h4>Clean Analysis of Global CO₂ Emissions (2000–2020)</h4>
 </div>
 """, unsafe_allow_html=True)
 
@@ -209,7 +214,7 @@ data = df[df["Year"] == year]
 
 
 # ============================================================
-# KPI FUNCTION
+# KPI BOX
 # ============================================================
 
 def kpi_box(title, value):
@@ -222,29 +227,28 @@ def kpi_box(title, value):
 
 
 # ============================================================
-# 🔴 GLOBAL INDICATORS TITLE (RESTORED)
+# KPI SECTION
 # ============================================================
 
-st.markdown("## 🔴 Global Indicators")
-
+st.subheader(f"Global Indicators ({year})")
 
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
     kpi_box("Avg CO₂ Emissions",
-             f"{data['CO2_emissions_kt'].mean():,.0f}")
+            f"{data['CO2_emissions_kt'].mean():,.0f}")
 
 with col2:
     kpi_box("Highest Emitter",
-             data.loc[data["CO2_emissions_kt"].idxmax(), "Country Name"])
+            data.loc[data["CO2_emissions_kt"].idxmax(), "Country Name"])
 
 with col3:
     kpi_box("GDP Per Capita",
-             f"${data['GDP_per_capita'].mean():,.0f}")
+            f"${data['GDP_per_capita'].mean():,.0f}")
 
 with col4:
     kpi_box("Electricity Access",
-             f"{data['Electricity_access_pct'].mean():.1f}%")
+            f"{data['Electricity_access_pct'].mean():.1f}%")
 
 
 # ============================================================
@@ -252,9 +256,9 @@ with col4:
 # ============================================================
 
 tab1, tab2, tab3 = st.tabs([
-    "Global Overview",
-    "Driver Analysis",
-    "Country Explorer"
+    "🌍 Global Overview",
+    "📊 Driver Analysis",
+    "🔎 Country Explorer"
 ])
 
 
@@ -272,7 +276,7 @@ with tab1:
             locations="Country Code",
             color="CO2_emissions_kt",
             hover_name="Country Name",
-            color_continuous_scale="Reds",
+            color_continuous_scale="Tealgrn",
             title=f"CO₂ Emissions by Country ({year})"
         )
         st.plotly_chart(fig_map, use_container_width=True)
@@ -285,7 +289,7 @@ with tab1:
             x="Country Name",
             y="CO2_emissions_kt",
             color="CO2_emissions_kt",
-            color_continuous_scale="Reds",
+            color_continuous_scale="Teal",
             title="Top 10 CO₂ Emitters"
         )
         st.plotly_chart(fig_top, use_container_width=True)
@@ -297,16 +301,16 @@ with tab1:
         x="Year",
         y="CO2_emissions_kt",
         markers=True,
-        title="Global CO₂ Trend"
+        title="Global CO₂ Emissions Trend"
     )
 
-    fig_trend.update_traces(line=dict(color="#ff4d4d", width=3))
+    fig_trend.update_traces(line=dict(color="#2a9d8f", width=3))
 
     st.plotly_chart(fig_trend, use_container_width=True)
 
 
 # ============================================================
-# TAB 2 & 3 (UNCHANGED LOGIC)
+# TAB 2
 # ============================================================
 
 with tab2:
@@ -323,12 +327,35 @@ with tab2:
         x="Driver",
         y="Impact",
         color="Impact",
-        color_continuous_scale="Reds",
+        color_continuous_scale="Teal",
         title="Key Drivers of CO₂ Emissions"
     )
 
     st.plotly_chart(fig_driver, use_container_width=True)
 
+    corr_cols = [
+        "CO2_emissions_kt",
+        "GDP_per_capita",
+        "Urban_population_pct",
+        "Population",
+        "Electricity_access_pct"
+    ]
+
+    corr = data[corr_cols].corr()
+
+    fig_corr = px.imshow(
+        corr,
+        text_auto=True,
+        color_continuous_scale="Tealgrn",
+        title="Correlation Matrix"
+    )
+
+    st.plotly_chart(fig_corr, use_container_width=True)
+
+
+# ============================================================
+# TAB 3
+# ============================================================
 
 with tab3:
 
@@ -347,6 +374,18 @@ with tab3:
         title=f"CO₂ Trend - {country}"
     )
 
-    fig_country.update_traces(line=dict(color="#ff4d4d", width=3))
+    fig_country.update_traces(line=dict(color="#2a9d8f", width=3))
 
     st.plotly_chart(fig_country, use_container_width=True)
+
+    fig_gdp = px.scatter(
+        country_df,
+        x="GDP_per_capita",
+        y="CO2_emissions_kt",
+        size="Population",
+        color="Urban_population_pct",
+        color_continuous_scale="Teal",
+        title=f"GDP vs CO₂ - {country}"
+    )
+
+    st.plotly_chart(fig_gdp, use_container_width=True)
